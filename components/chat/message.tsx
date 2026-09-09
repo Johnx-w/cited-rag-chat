@@ -13,6 +13,7 @@ import {
   ToolInput,
   ToolOutput,
 } from "../ai-elements/tool";
+import { ChatToolPart, isChatToolType } from "./chat-tool-part";
 import { useDataStream } from "./data-stream-provider";
 import { DocumentToolResult } from "./document";
 import { DocumentPreview } from "./document-preview";
@@ -186,6 +187,10 @@ const PurePreviewMessage = ({
           <MessageResponse>{sanitizeText(part.text)}</MessageResponse>
         </MessageContent>
       );
+    }
+
+    if (isChatToolType(type)) {
+      return <ChatToolPart key={key} part={part} />;
     }
 
     if (type === "tool-getWeather") {

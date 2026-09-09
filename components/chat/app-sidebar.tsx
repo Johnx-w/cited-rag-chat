@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BookOpenIcon,
   MessageSquareIcon,
   PanelLeftIcon,
   PenSquareIcon,
@@ -91,7 +92,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                 <SidebarMenuButton
                   asChild
                   className="size-8 !px-0 items-center justify-center group-data-[collapsible=icon]:group-hover/logo:opacity-0"
-                  tooltip="Chatbot"
+                  tooltip="知识助手"
                 >
                   <Link href="/" onClick={closeMobile}>
                     <MessageSquareIcon className="size-4 text-sidebar-foreground/50" />
@@ -129,6 +130,18 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                   >
                     <PenSquareIcon className="size-4" />
                     <span className="font-medium">New chat</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    className="h-8 rounded-lg text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    tooltip="Knowledge"
+                  >
+                    <Link href="/knowledge" onClick={closeMobile}>
+                      <BookOpenIcon className="size-4" />
+                      <span className="font-medium">Knowledge</span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 {user ? (

@@ -1,6 +1,18 @@
-import { customProvider, gateway } from "ai";
+import { createOpenAI } from "@ai-sdk/openai";
+import { customProvider } from "ai";
 import { isTestEnvironment } from "../constants";
 import { titleModel } from "./models";
+
+function deepseekBaseUrl() {
+  const raw = process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com";
+  return raw.endsWith("/v1") ? raw : `${raw.replace(/\/$/, "")}/v1`;
+}
+
+const deepseek = createOpenAI({
+  apiKey: process.env.DEEPSEEK_API_KEY,
+  baseURL: deepseekBaseUrl(),
+  name: "deepseek",
+});
 
 export const myProvider = isTestEnvironment
   ? (() => {
@@ -22,12 +34,12 @@ export function getLanguageModel(modelId: string) {
     return myProvider.languageModel(modelId);
   }
 
-  return gateway.languageModel(modelId);
+  return deepseek.chat(modelId as Parameters<typeof deepseek.chat>[0]);
 }
 
 export function getTitleModel() {
   if (isTestEnvironment && myProvider) {
     return myProvider.languageModel("title-model");
   }
-  return gateway.languageModel(titleModel.id);
+  return deepseek.chat(titleModel.id as Parameters<typeof deepseek.chat>[0]);
 }

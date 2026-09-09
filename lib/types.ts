@@ -1,10 +1,10 @@
 import type { InferUITool, UIMessage } from "ai";
 import { z } from "zod";
 import type { ArtifactKind } from "@/components/chat/artifact";
-import type { createDocument } from "./ai/tools/create-document";
-import type { getWeather } from "./ai/tools/get-weather";
-import type { requestSuggestions } from "./ai/tools/request-suggestions";
-import type { updateDocument } from "./ai/tools/update-document";
+import type { calculator } from "./ai/tools/calculator";
+import type { findIndexedFile } from "./ai/tools/find-indexed-file";
+import type { getCurrentTime } from "./ai/tools/get-current-time";
+import type { retrieveKnowledge } from "./ai/tools/retrieve-knowledge";
 import type { Suggestion } from "./db/schema";
 
 export const messageMetadataSchema = z.object({
@@ -13,18 +13,16 @@ export const messageMetadataSchema = z.object({
 
 export type MessageMetadata = z.infer<typeof messageMetadataSchema>;
 
-type weatherTool = InferUITool<typeof getWeather>;
-type createDocumentTool = InferUITool<ReturnType<typeof createDocument>>;
-type updateDocumentTool = InferUITool<ReturnType<typeof updateDocument>>;
-type requestSuggestionsTool = InferUITool<
-  ReturnType<typeof requestSuggestions>
->;
+type retrieveKnowledgeTool = InferUITool<typeof retrieveKnowledge>;
+type calculatorTool = InferUITool<typeof calculator>;
+type getCurrentTimeTool = InferUITool<typeof getCurrentTime>;
+type findIndexedFileTool = InferUITool<typeof findIndexedFile>;
 
 export type ChatTools = {
-  getWeather: weatherTool;
-  createDocument: createDocumentTool;
-  updateDocument: updateDocumentTool;
-  requestSuggestions: requestSuggestionsTool;
+  retrieve_knowledge: retrieveKnowledgeTool;
+  calculator: calculatorTool;
+  get_current_time: getCurrentTimeTool;
+  find_indexed_file: findIndexedFileTool;
 };
 
 export type WaitingStatusData = {

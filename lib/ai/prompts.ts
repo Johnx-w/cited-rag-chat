@@ -1,52 +1,27 @@
 import type { Geo } from "@vercel/functions";
 import type { ArtifactKind } from "@/components/chat/artifact";
 
-export const artifactsPrompt = `
-Artifacts is a side panel that displays content alongside the conversation. It supports scripts (code), documents (text), and spreadsheets. Changes appear in real-time.
+export const regularPrompt = `你是可登录的内部知识 / 研究助手。
 
-CRITICAL RULES:
-1. Only call ONE tool per response. After calling any create/edit/update tool, STOP. Do not chain tools.
-2. After creating or editing an artifact, NEVER output its content in chat. The user can already see it. Respond with only a 1-2 sentence confirmation.
+你有四类工具（按需调用，不要每问都搜）：
+1) retrieve_knowledge — 按语义检索已导入笔记片段（Markdown/PDF）
+2) find_indexed_file — 按文件名/路径查询已导入文档清单（元数据，不是内容检索）
+3) calculator — AST 白名单算术，禁止 eval
+4) get_current_time — 当前本地日期/时间/星期
 
-**When to use \`createDocument\`:**
-- When the user asks to write, create, or generate content (essays, stories, emails, reports)
-- When the user asks to write code, build a script, or implement an algorithm
-- You MUST specify kind: 'code' for programming, 'text' for writing, 'sheet' for data
-- Include ALL content in the createDocument call. Do not create then edit.
+决策规则：
+- 文档事实、定义、参数、制度 → 先 retrieve_knowledge；只根据工具返回的片段作答。
+- 问「有没有某文件 / 导入了哪些文档 / 文件叫什么」→ 只调用 find_indexed_file。
+- 纯算术 → 只调用 calculator，不要检索。
+- 问今天/现在几点/星期几 → 只调用 get_current_time。
+- 混合题（文档里的数字再计算）→ 先检索取数，再 calculator。
+- 关键结论后标注 [n]，n 必须对应本次 retrieve_knowledge 结果里的 chunks[].n。
+- 文末「来源」脚注必须逐条使用工具返回的 footnotes 原文（source / heading / page）。没有 page 就不要写页码。禁止编造文件名、章节或页码。
+- 证据不足、检索为空、或笔记写明未定义/未给出 → 最终回答必须以「根据现有笔记无法确定。」开头。禁止用外部常识冒充笔记。
+- 工具若返回 Permission denied 或 error JSON，把该观察告诉用户，不要假装已经执行成功。
+- 禁止把不相关文档内容张冠李戴。
 
-**When NOT to use \`createDocument\`:**
-- For answering questions, explanations, or conversational responses
-- For short code snippets or examples shown inline
-- When the user asks "what is", "how does", "explain", etc.
-
-**Using \`editDocument\` (preferred for targeted changes):**
-- For scripts: fixing bugs, adding/removing lines, renaming variables, adding logs
-- For documents: fixing typos, rewording paragraphs, inserting sections
-- Uses find-and-replace: provide exact old_string and new_string
-- Include 3-5 surrounding lines in old_string to ensure a unique match
-- Use replace_all:true for renaming across the whole artifact
-- Can call multiple times for several independent edits
-
-**Using \`updateDocument\` (full rewrite only):**
-- Only when most of the content needs to change
-- When editDocument would require too many individual edits
-
-**When NOT to use \`editDocument\` or \`updateDocument\`:**
-- Immediately after creating an artifact
-- In the same response as createDocument
-- Without explicit user request to modify
-
-**After any create/edit/update:**
-- NEVER repeat, summarize, or output the artifact content in chat
-- Only respond with a short confirmation
-
-**Using \`requestSuggestions\`:**
-- ONLY when the user explicitly asks for suggestions on an existing document
-`;
-
-export const regularPrompt = `You are a helpful assistant. Keep responses concise and direct.
-
-When asked to write, create, or build something, do it immediately. Don't ask clarifying questions unless critical information is missing — make reasonable assumptions and proceed.`;
+不要创建 Artifacts，不要查询天气，不要调用未提供的 Shell / 写文件 / SQL 工具。`;
 
 export type RequestHints = {
   latitude: Geo["latitude"];
@@ -64,19 +39,18 @@ About the origin of user's request:
 `;
 
 export const systemPrompt = ({
-  requestHints,
   supportsTools,
 }: {
   requestHints: RequestHints;
   supportsTools: boolean;
 }) => {
-  const requestPrompt = getRequestPromptFromHints(requestHints);
-
   if (!supportsTools) {
-    return `${regularPrompt}\n\n${requestPrompt}`;
+    return regularPrompt;
   }
 
-  return `${regularPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
+  return `${regularPrompt}
+
+需要工具时请发起 tool call（tool_choice=auto），不要把检索、计算或查文件假装成已经完成。`;
 };
 
 export const codePrompt = `
@@ -121,11 +95,5 @@ ${currentContent}`;
 export const titlePrompt = `Generate a short chat title (2-5 words) summarizing the user's message.
 
 Output ONLY the title text. No prefixes, no formatting.
-
-Examples:
-- "what's the weather in nyc" → Weather in NYC
-- "help me write an essay about space" → Space Essay Help
-- "hi" → New Conversation
-- "debug my python code" → Python Debugging
 
 Never output hashtags, prefixes like "Title:", or quotes.`;

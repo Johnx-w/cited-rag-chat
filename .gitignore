@@ -19,6 +19,15 @@ yarn-error.log*
 .env
 .vercel
 .env*.local
+.pg.env
+__pycache__/
+*.py[cod]
+python/.venv/
+python/indexes/chroma/**
+python/indexes/bm25/**
+!python/indexes/**/.gitkeep
+python/data/uploads/**
+!python/data/uploads/.gitkeep
 /test-results/
 /playwright-report/
 /blob-report/

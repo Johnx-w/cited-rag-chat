@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cited-rag-postgres
+    env_file: .pg.env
+    ports:
+      # 5432 on Windows is often taken by a stale WSL relay; 5433 avoids that.
+      - "5433:5432"
+    volumes:
+      - cited-rag-pgdata:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  cited-rag-pgdata:

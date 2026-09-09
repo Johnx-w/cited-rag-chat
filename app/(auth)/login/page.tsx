@@ -45,10 +45,8 @@ export default function Page() {
 
   return (
     <>
-      <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
-      <p className="text-sm text-muted-foreground">
-        Sign in to your account to continue
-      </p>
+      <h1 className="text-2xl font-semibold tracking-tight">欢迎回来</h1>
+      <p className="text-sm text-muted-foreground">登录内部知识 / 研究助手</p>
       <AuthForm action={handleSubmit} defaultEmail={email}>
         <SubmitButton isSuccessful={isSuccessful}>Sign in</SubmitButton>
         <p className="text-center text-[13px] text-muted-foreground">

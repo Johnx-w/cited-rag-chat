@@ -22,11 +22,11 @@ import {
 } from "@/lib/ai/models";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
-import { createDocument } from "@/lib/ai/tools/create-document";
-import { editDocument } from "@/lib/ai/tools/edit-document";
-import { getWeather } from "@/lib/ai/tools/get-weather";
-import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
-import { updateDocument } from "@/lib/ai/tools/update-document";
+import { calculator } from "@/lib/ai/tools/calculator";
+import { findIndexedFile } from "@/lib/ai/tools/find-indexed-file";
+import { getCurrentTime } from "@/lib/ai/tools/get-current-time";
+import { chatToolNames } from "@/lib/ai/tools/names";
+import { retrieveKnowledge } from "@/lib/ai/tools/retrieve-knowledge";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
@@ -268,15 +268,7 @@ export async function POST(request: Request) {
 
         const result = streamText({
           activeTools:
-            isReasoningModel && !supportsTools
-              ? []
-              : [
-                  "getWeather",
-                  "createDocument",
-                  "editDocument",
-                  "updateDocument",
-                  "requestSuggestions",
-                ],
+            isReasoningModel && !supportsTools ? [] : [...chatToolNames],
           instructions: systemPrompt({ requestHints, supportsTools }),
           messages: modelMessages,
           model: getLanguageModel(chatModel),
@@ -294,37 +286,17 @@ export async function POST(request: Request) {
           onError() {
             stopWaitingStatus();
           },
-          providerOptions: {
-            ...(modelConfig?.gatewayOrder && {
-              gateway: { order: modelConfig.gatewayOrder },
-            }),
-            ...(modelConfig?.reasoningEffort && {
-              openai: { reasoningEffort: modelConfig.reasoningEffort },
-            }),
-          },
-          stopWhen: isStepCount(5),
+          stopWhen: isStepCount(8),
           telemetry: {
             functionId: "stream-text",
             isEnabled: isProductionEnvironment,
           },
+          toolChoice: "auto",
           tools: {
-            createDocument: createDocument({
-              dataStream,
-              modelId: chatModel,
-              session,
-            }),
-            editDocument: editDocument({ dataStream, session }),
-            getWeather,
-            requestSuggestions: requestSuggestions({
-              dataStream,
-              modelId: chatModel,
-              session,
-            }),
-            updateDocument: updateDocument({
-              dataStream,
-              modelId: chatModel,
-              session,
-            }),
+            calculator,
+            find_indexed_file: findIndexedFile,
+            get_current_time: getCurrentTime,
+            retrieve_knowledge: retrieveKnowledge,
           },
         });
 
