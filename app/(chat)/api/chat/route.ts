@@ -22,11 +22,8 @@ import {
 } from "@/lib/ai/models";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
-import { calculator } from "@/lib/ai/tools/calculator";
-import { findIndexedFile } from "@/lib/ai/tools/find-indexed-file";
-import { getCurrentTime } from "@/lib/ai/tools/get-current-time";
+import { createChatTools } from "@/lib/ai/tools/create-chat-tools";
 import { chatToolNames } from "@/lib/ai/tools/names";
-import { retrieveKnowledge } from "@/lib/ai/tools/retrieve-knowledge";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
@@ -41,6 +38,11 @@ import {
 } from "@/lib/db/queries";
 import type { DBMessage } from "@/lib/db/schema";
 import { ChatbotError } from "@/lib/errors";
+import {
+  finishPythonTrace,
+  lastRoleText,
+  startPythonTrace,
+} from "@/lib/rag/trace";
 import { checkIpRateLimit } from "@/lib/ratelimit";
 import type { ChatMessage, WaitingStatusData } from "@/lib/types";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
@@ -201,6 +203,9 @@ export async function POST(request: Request) {
     const supportsTools = capabilities?.tools === true;
 
     const modelMessages = await convertToModelMessages(uiMessages);
+    const question = lastRoleText(uiMessages, "user");
+    const traceId = question ? await startPythonTrace(question) : undefined;
+    const chatTools = createChatTools(traceId);
 
     const stream = createUIMessageStream({
       execute: async ({ writer: dataStream }) => {
@@ -292,12 +297,7 @@ export async function POST(request: Request) {
             isEnabled: isProductionEnvironment,
           },
           toolChoice: "auto",
-          tools: {
-            calculator,
-            find_indexed_file: findIndexedFile,
-            get_current_time: getCurrentTime,
-            retrieve_knowledge: retrieveKnowledge,
-          },
+          tools: chatTools,
         });
 
         dataStream.merge(
@@ -319,6 +319,13 @@ export async function POST(request: Request) {
       },
       generateId: generateUUID,
       onEnd: async ({ messages: finishedMessages }) => {
+        if (traceId) {
+          const answer = lastRoleText(finishedMessages, "assistant");
+          const status = answer.includes("根据现有笔记无法确定")
+            ? "refused"
+            : "answered";
+          await finishPythonTrace(traceId, answer, status);
+        }
         if (isToolApprovalFlow) {
           await Promise.all(
             finishedMessages.map(async (finishedMsg) => {

@@ -5,6 +5,7 @@ import {
   MessageSquareIcon,
   PanelLeftIcon,
   PenSquareIcon,
+  ScrollTextIcon,
   TrashIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -141,6 +142,18 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                     <Link href="/knowledge" onClick={closeMobile}>
                       <BookOpenIcon className="size-4" />
                       <span className="font-medium">Knowledge</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    className="h-8 rounded-lg text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    tooltip="Traces"
+                  >
+                    <Link href="/traces" onClick={closeMobile}>
+                      <ScrollTextIcon className="size-4" />
+                      <span className="font-medium">Traces</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

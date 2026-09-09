@@ -7,7 +7,7 @@ import { ChatShell } from "./shell";
 export function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/knowledge")) {
+  if (pathname.startsWith("/knowledge") || pathname.startsWith("/traces")) {
     return <>{children}</>;
   }
 

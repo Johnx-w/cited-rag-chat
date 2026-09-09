@@ -18,7 +18,11 @@ function canRetry(path: string, method: string) {
   if (method === "GET") {
     return true;
   }
-  return path === "/retrieve" || path.startsWith("/tools/");
+  return (
+    path === "/retrieve" ||
+    path.startsWith("/tools/") ||
+    path.startsWith("/traces")
+  );
 }
 
 function wait(ms: number) {

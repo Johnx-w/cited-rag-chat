@@ -28,6 +28,11 @@ python/indexes/bm25/**
 !python/indexes/**/.gitkeep
 python/data/uploads/**
 !python/data/uploads/.gitkeep
+python/traces/*.json
+python/traces/index.jsonl
+!python/traces/.gitkeep
+python/tests/eval_run.json
+python/tests/eval_results.md
 /test-results/
 /playwright-report/
 /blob-report/

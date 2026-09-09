@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from src.agent.trace import append_tool_step
 from src.harness.pre_tool_use import pre_tool_use
 from src.rag.generate import build_context
 from src.rag.retriever import Retriever
@@ -12,9 +13,18 @@ from src.tools.calculator import calculate
 from src.tools.file_query import find_indexed_file
 from src.tools.time_tool import get_current_time
 
+_retriever: Retriever | None = None
+
+
+def _get_retriever() -> Retriever:
+    global _retriever
+    if _retriever is None:
+        _retriever = Retriever()
+    return _retriever
+
 
 def _retrieve_knowledge(query: str, top_k: int | None) -> dict[str, Any]:
-    retriever = Retriever()
+    retriever = _get_retriever()
     k = top_k or retriever.final_k
     hits = retriever.retrieve(query, top_k=k)
     if not hits:
@@ -53,32 +63,44 @@ def _retrieve_knowledge(query: str, top_k: int | None) -> dict[str, Any]:
     }
 
 
-def invoke_tool(name: str, arguments: dict[str, Any] | None = None) -> dict[str, Any]:
+def invoke_tool(
+    name: str,
+    arguments: dict[str, Any] | None = None,
+    trace_id: str | None = None,
+) -> dict[str, Any]:
     args = arguments or {}
     denied = pre_tool_use(name, args)
     if denied is not None:
-        return {"denied": True, "error": denied}
+        payload: dict[str, Any] = {"denied": True, "error": denied}
+        if trace_id:
+            append_tool_step(trace_id, name=name, arguments=args, observation=payload)
+        return payload
 
     try:
         if name == "calculator":
             expression = str(args.get("expression", ""))
             value = calculate(expression)
-            return {"result": {"expression": expression, "value": value}}
-        if name == "get_current_time":
-            return {"result": {"text": get_current_time()}}
-        if name == "find_indexed_file":
-            payload = json.loads(find_indexed_file(str(args.get("name_query", "") or "")))
-            return {"result": payload}
-        if name == "retrieve_knowledge":
+            payload = {"result": {"expression": expression, "value": value}}
+        elif name == "get_current_time":
+            payload = {"result": {"text": get_current_time()}}
+        elif name == "find_indexed_file":
+            found = json.loads(find_indexed_file(str(args.get("name_query", "") or "")))
+            payload = {"result": found}
+        elif name == "retrieve_knowledge":
             query = str(args.get("query", "")).strip()
             if not query:
-                return {"error": "query must be a non-empty string"}
-            raw_k = args.get("top_k")
-            top_k = int(raw_k) if raw_k is not None else None
-            return {"result": _retrieve_knowledge(query, top_k)}
+                payload = {"error": "query must be a non-empty string"}
+            else:
+                raw_k = args.get("top_k")
+                top_k = int(raw_k) if raw_k is not None else None
+                payload = {"result": _retrieve_knowledge(query, top_k)}
+        else:
+            payload = {"error": f"未知工具: {name}"}
     except (TypeError, ValueError) as exc:
-        return {"error": str(exc)}
+        payload = {"error": str(exc)}
     except Exception as exc:  # noqa: BLE001
-        return {"error": str(exc)}
+        payload = {"error": str(exc)}
 
-    return {"error": f"未知工具: {name}"}
+    if trace_id:
+        append_tool_step(trace_id, name=name, arguments=args, observation=payload)
+    return payload

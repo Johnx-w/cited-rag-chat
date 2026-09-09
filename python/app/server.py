@@ -14,6 +14,7 @@ from typing import Any
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
+from src.agent.trace import finish_trace, list_recent_traces, load_trace, start_trace
 from src.config import ROOT
 from src.harness.dispatch import invoke_tool
 from src.ingest.pipeline import ingest_directory, ingest_paths
@@ -22,7 +23,7 @@ from src.tools.file_query import find_indexed_file
 UPLOADS_DIR = ROOT / "data" / "uploads"
 SAFE_NAME = re.compile(r"[^A-Za-z0-9._\-\u4e00-\u9fff]+")
 
-app = FastAPI(title="cited-rag-knowledge", version="0.2.0")
+app = FastAPI(title="cited-rag-knowledge", version="0.3.0")
 
 
 class RetrieveBody(BaseModel):
@@ -33,6 +34,17 @@ class RetrieveBody(BaseModel):
 class InvokeBody(BaseModel):
     name: str = Field(min_length=1)
     arguments: dict[str, Any] = Field(default_factory=dict)
+    trace_id: str | None = None
+
+
+class StartTraceBody(BaseModel):
+    question: str = ""
+    trace_id: str | None = None
+
+
+class FinishTraceBody(BaseModel):
+    answer: str = ""
+    status: str | None = None
 
 
 def _safe_filename(name: str) -> str:
@@ -63,7 +75,36 @@ def retrieve(body: RetrieveBody):
 
 @app.post("/tools/invoke")
 def tools_invoke(body: InvokeBody):
-    return invoke_tool(body.name, body.arguments)
+    return invoke_tool(body.name, body.arguments, trace_id=body.trace_id)
+
+
+@app.post("/traces/start")
+def traces_start(body: StartTraceBody):
+    record = start_trace(body.question, body.trace_id)
+    return {"trace_id": record.trace_id, "started_at": record.started_at}
+
+
+@app.post("/traces/{trace_id}/finish")
+def traces_finish(trace_id: str, body: FinishTraceBody):
+    try:
+        path = finish_trace(trace_id, body.answer, body.status)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return {"ok": True, "trace_id": trace_id, "path": str(path)}
+
+
+@app.get("/traces")
+def traces_list(limit: int = 30):
+    capped = min(max(limit, 1), 100)
+    return {"traces": list_recent_traces(capped)}
+
+
+@app.get("/traces/{trace_id}")
+def traces_get(trace_id: str):
+    try:
+        return load_trace(trace_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @app.post("/ingest")

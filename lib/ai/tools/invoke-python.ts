@@ -9,11 +9,16 @@ type InvokePayload = {
 
 export async function invokePythonTool(
   name: string,
-  args: Record<string, string | number | boolean | null>
+  args: Record<string, string | number | boolean | null>,
+  traceId?: string
 ) {
   try {
+    const body: Record<string, unknown> = { arguments: args, name };
+    if (traceId) {
+      body.trace_id = traceId;
+    }
     const response = await pythonRagFetch("/tools/invoke", {
-      body: JSON.stringify({ arguments: args, name }),
+      body: JSON.stringify(body),
       headers: { "content-type": "application/json" },
       method: "POST",
     });
