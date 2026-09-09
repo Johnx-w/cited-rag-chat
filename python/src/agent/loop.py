@@ -66,6 +66,8 @@ def _synthesize(
     calc_value = ""
     time_text = ""
     files_text = ""
+    weekly_md = ""
+    sql_preview = ""
     for name, payload in zip(tool_names, observations, strict=False):
         result = _result(payload)
         blob = _obs_blob(result)
@@ -81,6 +83,10 @@ def _synthesize(
             files_text = "、".join(
                 str(item.get("source", "")) for item in files if isinstance(item, dict)
             )
+        if name == "generate_weekly_report" and isinstance(result, dict):
+            weekly_md = str(result.get("markdown") or "")
+        if name == "query_business_data" and isinstance(result, dict):
+            sql_preview = json.dumps(result.get("rows") or [], ensure_ascii=False)[:800]
     if _should_refuse(question, retrieve_blob):
         return REFUSE_MARK, "refused"
     if "一定全面强于" in question:
@@ -106,6 +112,10 @@ def _synthesize(
         parts.append(time_text)
     if files_text:
         parts.append(f"已导入匹配文件：{files_text}")
+    if weekly_md:
+        parts.append(weekly_md)
+    if sql_preview:
+        parts.append(sql_preview)
     if not parts:
         return f"{REFUSE_MARK}", "refused"
     answer = "\n".join(parts)
@@ -125,6 +135,15 @@ def _build_script(question: str) -> tuple[list[str], list[LLMResponse]]:
             args = {"name_query": find_indexed_query(question)}
         elif name == "retrieve_knowledge":
             args = {"query": question}
+        elif name == "query_business_data":
+            args = {
+                "sql": (
+                    "SELECT shipped_on, product, units, revenue_cny "
+                    "FROM orders ORDER BY shipped_on"
+                )
+            }
+        elif name == "generate_weekly_report":
+            args = {}
         script.append(tool_response(f"fake-{index}", name, args))
     script.append(text_response(""))
     return names, script

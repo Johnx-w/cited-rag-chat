@@ -2,6 +2,7 @@
 
 import {
   BookOpenIcon,
+  ClipboardListIcon,
   MessageSquareIcon,
   PanelLeftIcon,
   PenSquareIcon,
@@ -154,6 +155,18 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                     <Link href="/traces" onClick={closeMobile}>
                       <ScrollTextIcon className="size-4" />
                       <span className="font-medium">Traces</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    className="h-8 rounded-lg text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    tooltip="Weekly report"
+                  >
+                    <Link href="/reports" onClick={closeMobile}>
+                      <ClipboardListIcon className="size-4" />
+                      <span className="font-medium">Reports</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

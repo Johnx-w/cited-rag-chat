@@ -14,7 +14,7 @@ export const DUMMY_PASSWORD = generateDummyPassword();
 
 export const suggestions = [
   "AlphaCore-7 的核心参数是什么？",
-  "知识库里有没有 alphacore 这份文件？",
-  "(35+17)*4-20 等于多少？",
+  "演示库里 AlphaCore-7 载板出货了多少？",
+  "生成一份演示周报",
   "现在几点、星期几？",
 ];

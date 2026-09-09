@@ -3,7 +3,9 @@ import { z } from "zod";
 import type { ArtifactKind } from "@/components/chat/artifact";
 import type { calculator } from "./ai/tools/calculator";
 import type { findIndexedFile } from "./ai/tools/find-indexed-file";
+import type { generateWeeklyReport } from "./ai/tools/generate-weekly-report";
 import type { getCurrentTime } from "./ai/tools/get-current-time";
+import type { queryBusinessData } from "./ai/tools/query-business-data";
 import type { retrieveKnowledge } from "./ai/tools/retrieve-knowledge";
 import type { Suggestion } from "./db/schema";
 
@@ -17,12 +19,16 @@ type retrieveKnowledgeTool = InferUITool<typeof retrieveKnowledge>;
 type calculatorTool = InferUITool<typeof calculator>;
 type getCurrentTimeTool = InferUITool<typeof getCurrentTime>;
 type findIndexedFileTool = InferUITool<typeof findIndexedFile>;
+type queryBusinessDataTool = InferUITool<typeof queryBusinessData>;
+type generateWeeklyReportTool = InferUITool<typeof generateWeeklyReport>;
 
 export type ChatTools = {
   retrieve_knowledge: retrieveKnowledgeTool;
   calculator: calculatorTool;
   get_current_time: getCurrentTimeTool;
   find_indexed_file: findIndexedFileTool;
+  query_business_data: queryBusinessDataTool;
+  generate_weekly_report: generateWeeklyReportTool;
 };
 
 export type WaitingStatusData = {

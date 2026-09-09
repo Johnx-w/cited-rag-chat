@@ -11,7 +11,9 @@ from src.rag.generate import build_context
 from src.rag.retriever import Retriever
 from src.tools.calculator import calculate
 from src.tools.file_query import find_indexed_file
+from src.tools.sql_query import query_business_data
 from src.tools.time_tool import get_current_time
+from src.tools.weekly_report import generate_weekly_report
 
 _retriever: Retriever | None = None
 
@@ -94,6 +96,14 @@ def invoke_tool(
                 raw_k = args.get("top_k")
                 top_k = int(raw_k) if raw_k is not None else None
                 payload = {"result": _retrieve_knowledge(query, top_k)}
+        elif name == "query_business_data":
+            payload = {
+                "result": query_business_data(str(args.get("sql", "") or ""))
+            }
+        elif name == "generate_weekly_report":
+            raw_week = args.get("week_start")
+            week_start = str(raw_week) if raw_week else None
+            payload = {"result": generate_weekly_report(week_start)}
         else:
             payload = {"error": f"未知工具: {name}"}
     except (TypeError, ValueError) as exc:

@@ -23,7 +23,7 @@ from src.tools.file_query import find_indexed_file
 UPLOADS_DIR = ROOT / "data" / "uploads"
 SAFE_NAME = re.compile(r"[^A-Za-z0-9._\-\u4e00-\u9fff]+")
 
-app = FastAPI(title="cited-rag-knowledge", version="0.3.0")
+app = FastAPI(title="cited-rag-knowledge", version="0.4.0")
 
 
 class RetrieveBody(BaseModel):
@@ -57,7 +57,19 @@ def _safe_filename(name: str) -> str:
 
 @app.get("/health")
 def health():
-    return {"ok": True, "service": "cited-rag-knowledge"}
+    return {
+        "ok": True,
+        "service": "cited-rag-knowledge",
+        "mcp": "python -m src.mcp_server",
+    }
+
+
+@app.get("/reports/weekly")
+def weekly_report(week_start: str | None = None):
+    return invoke_tool(
+        "generate_weekly_report",
+        {"week_start": week_start} if week_start else {},
+    )
 
 
 @app.get("/files")

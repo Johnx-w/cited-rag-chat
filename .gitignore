@@ -28,6 +28,7 @@ python/indexes/bm25/**
 !python/indexes/**/.gitkeep
 python/data/uploads/**
 !python/data/uploads/.gitkeep
+python/data/demo/*.sqlite
 python/traces/*.json
 python/traces/index.jsonl
 !python/traces/.gitkeep

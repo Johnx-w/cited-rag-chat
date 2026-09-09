@@ -35,6 +35,18 @@ class PlannerTests(unittest.TestCase):
             ["retrieve_knowledge", "calculator"],
         )
 
+    def test_weekly_report_keyword(self) -> None:
+        self.assertEqual(
+            plan_tool_names("生成一份演示周报"),
+            ["generate_weekly_report"],
+        )
+
+    def test_demo_sql_keyword(self) -> None:
+        self.assertEqual(
+            plan_tool_names("演示库里 AlphaCore-7 载板出货了多少？"),
+            ["query_business_data"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

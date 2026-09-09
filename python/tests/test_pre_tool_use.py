@@ -15,8 +15,8 @@ class PreToolUseTests(unittest.TestCase):
         self.assertIsNotNone(reason)
         self.assertIn("Permission denied", reason or "")
 
-    def test_denies_sql_until_whitelist(self) -> None:
-        reason = pre_tool_use("query_business_data", {"sql": "select 1"})
+    def test_denies_unlisted_sql_tool(self) -> None:
+        reason = pre_tool_use("execute_sql", {"sql": "select 1"})
         self.assertIsNotNone(reason)
         self.assertIn("whitelist", reason or "")
 

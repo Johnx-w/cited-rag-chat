@@ -13,10 +13,18 @@ ASCII_EXPR_RE = re.compile(r"\([0-9+\-*/().\s]+\)[0-9+\-*/.\s]*")
 PURE_ARITH_RE = re.compile(r"请计算|等于多少|除以|再加")
 
 
+WEEKLY_RE = re.compile(r"周报|本周汇总")
+SQL_DEMO_RE = re.compile(r"演示库|演示出货|演示工单")
+
+
 def plan_tool_names(question: str) -> list[str]:
     q = question or ""
     if IGNORE_KB_RE.search(q):
         return ["retrieve_knowledge"]
+    if WEEKLY_RE.search(q):
+        return ["generate_weekly_report"]
+    if SQL_DEMO_RE.search(q):
+        return ["query_business_data"]
     if FILE_RE.search(q):
         return ["find_indexed_file"]
     if TIME_RE.search(q) and not MIXED_TIME_RE.search(q) and "查阅" not in q:

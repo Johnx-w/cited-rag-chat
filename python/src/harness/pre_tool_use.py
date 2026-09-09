@@ -1,8 +1,9 @@
 """PreToolUse policy migrated from hearth-harness Permission.
 
 Hearth default-allows unknown tools and asks before bash. This Web app
-inverts that: only the allowlist runs; shell / write / SQL stay denied
-until a later whitelist exists.
+inverts that: only the allowlist runs; shell / write stay denied.
+SQL is denied unless the tool name is on SQL_WHITELIST, and the handler
+still rejects non-SELECT.
 """
 
 from __future__ import annotations
@@ -15,6 +16,8 @@ ALLOWED_TOOLS = frozenset(
         "calculator",
         "get_current_time",
         "find_indexed_file",
+        "query_business_data",
+        "generate_weekly_report",
     }
 )
 
@@ -38,7 +41,7 @@ SQL_TOOLS = frozenset(
     }
 )
 
-SQL_WHITELIST: frozenset[str] = frozenset()
+SQL_WHITELIST: frozenset[str] = frozenset({"query_business_data"})
 
 DENY_SUBSTRINGS = ("rm -rf /", "sudo", "shutdown", "reboot", "mkfs", "dd if=")
 

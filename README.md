@@ -12,18 +12,18 @@ GitHub 上这是独立仓库 `Johnx-w/cited-rag-chat`，**不是**官方 fork �
 | `get-weather`、官方 Artifacts 作为默认工具 | 官方模板 | 阶段 1 已从聊天工具里移除 |
 | 知识库入库 / `retrieve_knowledge` / 引用与拒答 | 迁自已有 RAG + Tool Calling（Python，不是 TS 重写） | 阶段 1 |
 | calculator / 时间 / `find_indexed_file` / PreToolUse 闸门 | 迁自 RAG 工具 + Hearth PreToolUse 机制 | 阶段 2 |
-| JSONL Trace、FakeClient 离线评测 | 已有评测口径 | 阶段 3，未做 |
-| 只读 SQL、周报、FastMCP | 第二期 | 不要与阶段 1 并行 |
+| JSONL Trace、FakeClient 离线评测 | 已有评测口径 | 阶段 3 |
+| 只读 SQLite、演示周报、FastMCP | 已有 RAG 第二期机制 | 阶段 4 |
 
 简历只写实际实现的部分。评测是离线集，不要写成生产指标或上线用户量。
 
 ## 当前进度
 
-**阶段 2**：聊天工具为 `retrieve_knowledge`、`calculator`、`get_current_time`、`find_indexed_file`。全部经 Python `POST /tools/invoke`；执行前走 PreToolUse 白名单（默认放行这四个；bash / 写文件 / SQL 拒绝）。非法算术参数以 error JSON 回灌模型。工具 HTTP 对 429/529 有限次退避。
+**阶段 4**：在阶段 2 四个工具之外增加 `query_business_data`（只读演示 SQLite）和 `generate_weekly_report`（固定 SELECT 出演示周报）。SQL 工具名白名单只放行 `query_business_data`；`execute_sql` / 未列出的 SQL 仍拒绝。非法 SQL 以 error JSON 回灌模型，不写库。侧栏 **Reports** 打开 `/reports` 生成演示周报。FastMCP stdio 只暴露 `retrieve_knowledge`，内部仍走 `invoke_tool` / PreToolUse。
 
-阶段 1 的登录、DeepSeek 流式、知识库上传与引用/拒答仍然有效。向量 Key 不足时仍 fail-open 到本地 MiniLM。
+阶段 1–3 仍然有效：登录、DeepSeek 流式、知识库引用/拒答、四类基础工具、JSONL Trace、FakeClient 冻结集。阶段 4 **没有**把 SQL/周报题塞进冻结集。向量 Key 不足时仍 fail-open 到本地 MiniLM。
 
-没有把 Streamlit 搬进 Next.js。没有上线、没有用户量。
+没有把 Streamlit 搬进 Next.js。没有真 IMAP、LangGraph、GraphRAG、浏览器操作 Agent。没有上线、没有用户量。
 
 ## 本地运行（Windows / PowerShell）
 
@@ -84,7 +84,9 @@ pnpm dev
 
 - 登录：[http://localhost:3000/login](http://localhost:3000/login)
 - 知识库：[http://localhost:3000/knowledge](http://localhost:3000/knowledge)
-- 聊天：建议问句覆盖检索、文件清单、算术、当前时间。文档题应变引用 `[n]` 或「根据现有笔记无法确定。」
+- 演示周报：[http://localhost:3000/reports](http://localhost:3000/reports)
+- Trace 回放：[http://localhost:3000/traces](http://localhost:3000/traces)
+- 聊天：建议问句覆盖检索、演示库出货、演示周报、当前时间。文档题应变引用 `[n]` 或「根据现有笔记无法确定。」演示库数字不要写成笔记引用。
 
 闸门自测（Python）：
 
@@ -96,7 +98,28 @@ $env:PYTHONPATH = "."
 
 ### 6. 评测
 
-阶段 1 **没有**评测脚本。阶段 3 才会提供 FakeClient / `LLM_BACKEND=fake`；结果写入 `docs/`，写清题量和日期。
+```powershell
+cd python
+.\.venv\Scripts\python.exe scripts\run_eval.py --backend fake
+```
+
+冻结集快照见 `docs/eval-baseline.md`。这是离线题量，不要写成生产指标。
+
+### 7. FastMCP（stdio）
+
+只暴露 `retrieve_knowledge`。从仓库根目录：
+
+```powershell
+.\scripts\start-mcp.ps1
+```
+
+或在 `python/` 目录：
+
+```powershell
+.\.venv\Scripts\python.exe -m src.mcp_server
+```
+
+这是给其他 MCP 客户端用的 stdio 服务，不是浏览器页。执行前仍走 PreToolUse，不会另开写文件/Shell 通道。
 
 ## 仓库远程
 

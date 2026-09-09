@@ -12,7 +12,7 @@
 ```
 
 - 默认且唯一后端：`FakeClient`（脚本化 `tool_use` / 终态，**零真实聊天模型 HTTP 请求**）。
-- 工具观察走真实 `invoke_tool`：`retrieve_knowledge` / `calculator` / `get_current_time` / `find_indexed_file`。
+- 工具观察走真实 `invoke_tool`：`retrieve_knowledge` / `calculator` / `get_current_time` / `find_indexed_file`。阶段 4 的 `query_business_data` / `generate_weekly_report` **不在**本冻结集里。
 - 规划器只看问题文本启发式，**不读取** `expected_actions`。
 - 知识库为空时会先 `ingest_directory()` 样例 Markdown。本仓冻结集已去掉 PDF 金标。
 

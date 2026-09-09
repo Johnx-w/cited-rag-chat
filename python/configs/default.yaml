@@ -51,3 +51,4 @@ trace:
 paths:
   chroma: indexes/chroma     # 可被 .env CHROMA_PATH 覆盖
   bm25: indexes/bm25/corpus.json
+  demo_sqlite: data/demo/business.sqlite

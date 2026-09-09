@@ -63,6 +63,12 @@ function summary(type: string, output: unknown) {
   if (type === "tool-find_indexed_file") {
     return `匹配 ${String(record.match_count ?? 0)} / 已索引 ${String(record.total_indexed ?? 0)}`;
   }
+  if (type === "tool-query_business_data") {
+    return `演示库 ${String(record.row_count ?? 0)} 行`;
+  }
+  if (type === "tool-generate_weekly_report") {
+    return `周报 ${String(record.week_start ?? "")} ~ ${String(record.week_end ?? "")}`;
+  }
   return "已完成";
 }
 
@@ -114,11 +120,15 @@ export function isChatToolType(
   | "tool-retrieve_knowledge"
   | "tool-calculator"
   | "tool-get_current_time"
-  | "tool-find_indexed_file" {
+  | "tool-find_indexed_file"
+  | "tool-query_business_data"
+  | "tool-generate_weekly_report" {
   return (
     type === "tool-retrieve_knowledge" ||
     type === "tool-calculator" ||
     type === "tool-get_current_time" ||
-    type === "tool-find_indexed_file"
+    type === "tool-find_indexed_file" ||
+    type === "tool-query_business_data" ||
+    type === "tool-generate_weekly_report"
   );
 }
