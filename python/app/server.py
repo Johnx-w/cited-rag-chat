@@ -7,15 +7,18 @@ POST /tools/invoke so PreToolUse runs before every observation.
 from __future__ import annotations
 
 import json
+import os
 import re
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from src.agent.trace import finish_trace, list_recent_traces, load_trace, start_trace
-from src.config import ROOT
+from src.config import ROOT, get_settings
 from src.harness.dispatch import invoke_tool
 from src.ingest.pipeline import ingest_directory, ingest_paths
 from src.tools.file_query import find_indexed_file
@@ -23,7 +26,61 @@ from src.tools.file_query import find_indexed_file
 UPLOADS_DIR = ROOT / "data" / "uploads"
 SAFE_NAME = re.compile(r"[^A-Za-z0-9._\-\u4e00-\u9fff]+")
 
-app = FastAPI(title="cited-rag-knowledge", version="0.4.0")
+# 共享密钥。只在「本服务暴露到公网、由外部 Next.js 调用」时才需要设置；
+# 留空则完全不校验，本地开发行为与之前完全一致。
+INTERNAL_TOKEN = os.getenv("INTERNAL_TOKEN", "").strip()
+
+# 冷启动自愈：无持久盘的托管环境（Render free / Hugging Face Spaces 等）
+# 容器重启后 Chroma 索引会丢，设 BOOTSTRAP_INGEST=1 时启动阶段重新灌一次
+# data/sample。索引非空则跳过。默认关闭。
+BOOTSTRAP_INGEST = os.getenv("BOOTSTRAP_INGEST", "0") == "1"
+
+
+def bootstrap_index() -> None:
+    """索引为空时用 data/sample 重新播种，失败不影响服务启动。"""
+    if not BOOTSTRAP_INGEST:
+        return
+    try:
+        from src.rag.vectorstore import VectorStore
+
+        settings = get_settings()
+        store = VectorStore(
+            persist_dir=settings.resolved_chroma_path(),
+            embedding_model=settings.embedding_model,
+        )
+        existing = store.count()
+        if existing > 0:
+            print(f"[bootstrap] index already holds {existing} chunks, skip")
+            return
+        report = ingest_directory()
+        print(
+            f"[bootstrap] seeded sample corpus: files={len(report.files)} "
+            f"chunks={report.chunks} errors={report.errors}"
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(f"[bootstrap] skipped: {exc}")
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    bootstrap_index()
+    yield
+
+
+app = FastAPI(title="cited-rag-knowledge", version="0.4.0", lifespan=lifespan)
+
+
+@app.middleware("http")
+async def require_internal_token(request: Request, call_next):
+    """公网部署的兜底闸门：除 /health 外都要求 X-Internal-Token。"""
+    if INTERNAL_TOKEN and request.url.path != "/health":
+        token = request.headers.get("x-internal-token", "")
+        if token != INTERNAL_TOKEN:
+            return JSONResponse(
+                status_code=401,
+                content={"ok": False, "detail": "missing or invalid internal token"},
+            )
+    return await call_next(request)
 
 
 class RetrieveBody(BaseModel):

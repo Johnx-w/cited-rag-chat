@@ -8,6 +8,15 @@ export function pythonRagUrl() {
   );
 }
 
+/**
+ * 共享密钥。仅当 Python 知识库服务部署在公网（本机不在同一个 Docker 网络里）
+ * 时才需要设置；留空则不发这个头，本地开发行为与之前完全一致。
+ * 与 Python 侧 python/app/server.py 的 INTERNAL_TOKEN 取同一个值。
+ */
+function internalToken() {
+  return process.env.INTERNAL_TOKEN ?? "";
+}
+
 function retryDelayMs(status: number, attempt: number) {
   const base = status === 529 ? OVERLOAD_SLEEP_MS : RATE_LIMIT_SLEEP_MS;
   const jitter = 1 + 0.25 * Math.random();
@@ -37,9 +46,15 @@ async function fetchOnce(
   attempt: number
 ): Promise<Response> {
   const method = (init?.method ?? "GET").toUpperCase();
+  const headers = new Headers(init?.headers);
+  const token = internalToken();
+  if (token) {
+    headers.set("X-Internal-Token", token);
+  }
   const response = await fetch(`${pythonRagUrl()}${path}`, {
     cache: "no-store",
     ...init,
+    headers,
     signal: init?.signal ?? AbortSignal.timeout(60_000),
   });
   const retryableStatus = response.status === 429 || response.status === 529;

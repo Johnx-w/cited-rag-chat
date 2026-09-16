@@ -1,0 +1,37 @@
+# Caddy 反代：对外只开 web 一个入口，自动 HTTPS。
+#
+# SITE_DOMAIN 由 docker-compose.prod.yml 从 deploy/stack.env 注入。
+# 证书自动申请需要满足两点：域名 A 记录已指向本机、80 与 443 端口可从公网访问。
+#
+# 只用 IP、不绑域名调试时，把下面整块换成：
+#   :80 {
+#       reverse_proxy web:3000
+#   }
+
+{$SITE_DOMAIN} {
+	encode zstd gzip
+
+	# 知识库允许上传 md / pdf，给请求体一个上限，避免有人拿大文件打满磁盘
+	request_body {
+		max_size 20MB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	reverse_proxy web:3000 {
+		# 流式回答是 SSE，别让反代缓冲把 token 卡住
+		flush_interval -1
+	}
+
+	log {
+		output file /data/access.log {
+			roll_size 10MiB
+			roll_keep 5
+		}
+	}
+}

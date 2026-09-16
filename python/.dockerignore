@@ -1,0 +1,22 @@
+# 构建上下文是 python/，这些都不该进镜像
+.venv
+venv
+env
+__pycache__
+**/__pycache__
+*.py[cod]
+*.egg-info
+
+# 有状态目录：运行时由卷挂载提供，镜像里不要带本机的数据
+# 注意：data/sample 必须保留，它是 /ingest-sample 与 BOOTSTRAP_INGEST 的语料
+indexes
+traces
+data/uploads
+data/demo
+
+# 本地密钥与本地产物
+.env
+*.env
+!*.env.example
+tests/eval_run.json
+tests/eval_results.md

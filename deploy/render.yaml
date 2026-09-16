@@ -1,0 +1,47 @@
+# Render Blueprint：只托管「知识库服务」这一个容器。
+# 配合 Vercel（Next.js）+ Neon（Postgres）使用，步骤见 DEPLOY.md「方案 A」。
+#
+# 用法：Render 控制台 → New → Blueprint → 选这个仓库 → 它会读到本文件。
+#
+# 注意两件事：
+# 1. plan: starter 是付费档，因为 Render 的持久磁盘只对付费实例开放。
+#    想用免费档就把 plan 改成 free、删掉 disk，并设置 BOOTSTRAP_INGEST=1 —
+#    代价是上传的文档每次重启会丢，演示语料会重建。
+# 2. 免费档 15 分钟无请求就休眠，唤醒要几十秒，而 Next.js 侧对知识库的
+#    超时是 60 秒。Demo 前先手动访问一次 /health 预热。
+
+services:
+  - type: web
+    name: cited-rag-knowledge
+    runtime: docker
+    plan: starter
+    region: singapore
+    dockerfilePath: ./python/Dockerfile
+    dockerContext: ./python
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # 公网可达，必须设；值要与 Vercel 上 web 项目的 INTERNAL_TOKEN 一致
+      - key: INTERNAL_TOKEN
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_BASE_URL
+        value: https://api.deepseek.com
+      - key: LLM_MODEL
+        value: deepseek-chat
+      - key: EMBEDDING_API_KEY
+        sync: false
+      - key: EMBEDDING_BASE_URL
+        sync: false
+      - key: EMBEDDING_MODEL
+        value: text-embedding-3-small
+      - key: CHROMA_PATH
+        value: indexes/chroma
+      # 有持久磁盘时可以留 0；换成 free 档要改成 "1"
+      - key: BOOTSTRAP_INGEST
+        value: "0"
+    disk:
+      name: cited-rag-index
+      mountPath: /srv/indexes
+      sizeGB: 1

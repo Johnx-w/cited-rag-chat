@@ -49,6 +49,10 @@ const nextConfig: NextConfig = {
   },
   poweredByHeader: false,
   reactCompiler: true,
+  // 仅自托管 Docker 构建时打开（见仓库根 Dockerfile）。Vercel 构建不受影响。
+  ...(process.env.NEXT_OUTPUT_STANDALONE === "1"
+    ? { output: "standalone" as const }
+    : {}),
 };
 
 export default withBotId(nextConfig);

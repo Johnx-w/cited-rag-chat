@@ -1,0 +1,38 @@
+# 构建上下文是仓库根目录
+.git
+.github
+.husky
+.vscode
+.cursor
+.vercel
+.turbo
+
+node_modules
+**/node_modules
+.next
+out
+build
+coverage
+test-results
+playwright-report
+blob-report
+playwright
+
+# 本地密钥一律不进镜像
+.env
+.env.local
+.env*.local
+.pg.env
+deploy/stack.env
+deploy/web.env
+deploy/python.env
+
+# Python 侧由 python/Dockerfile 单独构建，web 镜像不需要
+python/.venv
+python/indexes
+python/traces
+python/data/uploads
+python/data/demo
+python/__pycache__
+**/__pycache__
+*.py[cod]

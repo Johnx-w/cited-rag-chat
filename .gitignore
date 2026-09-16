@@ -40,3 +40,8 @@ python/tests/eval_results.md
 /playwright/*
 next-env.d.ts
 tsconfig.tsbuildinfo
+
+# 部署用的密钥文件（示例文件 *.example 保留在仓库里）
+deploy/stack.env
+deploy/web.env
+deploy/python.env
