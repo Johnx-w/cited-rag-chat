@@ -67,15 +67,31 @@ Spaces 免费档给 2 vCPU / 16 GB 内存，比 Render free 宽裕得多，而�
 
 ```bash
 cd python
+
+# 这一步是新建一个独立仓库 —— 父仓库的 .gitignore 在这里不生效，
+# python/.gitignore 就是为了这件事存在的，别删。
 git init
 git remote add space https://huggingface.co/spaces/<你的HF用户名>/cited-rag-knowledge
-git add .
+
+# 推送前先自查：输出里不该出现 .env、indexes/、traces/、.venv/
+git add -A --dry-run
+
 git commit -m "deploy knowledge service"
 git push space main
 ```
 
+   推送会要认证。HF 不接受账号密码，要用 **Access Token**：在
+   [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens) 建一个
+   **Write** 权限的 token，push 时用户名填 HF 用户名、密码粘贴这个 token。
+   也可以用 `huggingface-cli login` 先登录，之后 push 就不用再输。
+
+   > **如果 `git add -A --dry-run` 里看到了 `.env`，先停下。** 那说明
+   > `python/.gitignore` 没生效（被删了或改了）。已经推上去的话立刻去
+   > DeepSeek 控制台吊销该 key 重新签发 —— HF Space 仓库默认公开，key 等于已泄露。
+
    `python/README.md` 里已经有 Spaces 需要的元数据（`sdk: docker`、`app_port: 8000`），
-   不用改；它同时也就是本目录的说明文档。
+   不用改；它同时也就是本目录的说明文档。`indexes/` 与 `traces/` 不需要推上去：
+   Space 上由 `BOOTSTRAP_INGEST=1` 冷启动重建语料。
 3. 进 Space → **Settings → Variables and secrets**，加上：
 
 | 名称 | 值 |
@@ -230,6 +246,13 @@ Python 服务只用 `expose`、不做端口映射，所以公网访问不到它�
 6. **上传大 PDF 失败** —— `deploy/Caddyfile` 的 `request_body` 限了 20MB，要放宽改那里。
 7. **别把 `.env.local` 打进镜像** —— `lib/db/migrate.ts` 用 dotenv 读 `.env.local`，
    容器里没这个文件时 dotenv 静默跳过、退回读容器环境变量，这是预期行为。
+8. **推 HF Space 前 `git add -A --dry-run` 看一眼** —— `cd python && git init` 建的是
+   独立仓库，父仓库 `.gitignore` 不再生效，全靠 `python/.gitignore` 兜底。这是全流程
+   唯一一处「操作失误会直接把密钥发到公网」的地方，多花十秒确认。
+9. **Space 构建失败先看是不是 `data/sample` 被漏了** —— `python/.dockerignore`
+   刻意保留了它（`/ingest-sample` 与 `BOOTSTRAP_INGEST` 都依赖）。要是自己改过
+   `.dockerignore` 把 `data` 整个排掉，冷启动就没有语料可灌，表现是「能问答但永远
+   答无法确定」。
 
 ## 上线之后
 

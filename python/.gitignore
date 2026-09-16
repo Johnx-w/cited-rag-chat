@@ -1,0 +1,37 @@
+# 把本目录作为独立仓库推送时（例如 Hugging Face Space 的根）用的忽略规则。
+# 父仓库根目录那份 .gitignore 管不到独立仓库，所以这里必须再来一份，
+# 否则 .env 里的密钥和有状态目录会一起被推上去。
+# 规则与根 .gitignore 的 python/ 段保持一致，不会改变父仓库的行为。
+
+# 密钥。Spaces 用 Settings → Variables and secrets 注入，绝不进仓库
+.env
+.env*.local
+
+# 本地虚拟环境
+.venv/
+venv/
+
+# 有状态目录：Chroma 向量库、上传件、Trace、演示 SQLite
+indexes/chroma/**
+indexes/bm25/**
+!indexes/**/.gitkeep
+data/uploads/**
+!data/uploads/.gitkeep
+data/demo/*.sqlite
+traces/*.json
+traces/index.jsonl
+!traces/.gitkeep
+
+# Python 产物
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# 离线评测产物（体积大、每次重跑都会变）
+tests/eval_run.json
+tests/eval_results.md
+
+# 系统杂物
+.DS_Store
+Thumbs.db
