@@ -15,7 +15,6 @@ GitHub 上这是独立仓库 `Johnx-w/cited-rag-chat`，**不是**官方 fork �
 | JSONL Trace、FakeClient 离线评测 | 已有评测口径 | 阶段 3 |
 | 只读 SQLite、演示周报、FastMCP | 已有 RAG 第二期机制 | 阶段 4 |
 
-简历只写实际实现的部分。评测是离线集，不要写成生产指标或上线用户量。
 
 ## 当前进度
 
