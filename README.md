@@ -2,8 +2,6 @@
 
 可登录的内部知识 / 研究助手。本仓库**不是**从零写的聊天产品：前端工程壳来自 [vercel/chatbot](https://github.com/vercel/chatbot)，检索、强制引用、JSONL Trace、离线评测和工具权限闸门才是本仓库要实现的业务。
 
-GitHub 上这是独立仓库 `Johnx-w/cited-rag-chat`，**不是**官方 fork 展示页。本地保留 `upstream` 指向官方模板，便于对照，不用于对外展示。
-
 ## 对照 vercel/chatbot
 
 | 部分 | 来源 | 状态 |
