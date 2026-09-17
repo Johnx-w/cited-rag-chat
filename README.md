@@ -20,7 +20,7 @@
 
 阶段 1–3 仍然有效：登录、DeepSeek 流式、知识库引用/拒答、四类基础工具、JSONL Trace、FakeClient 冻结集。阶段 4 **没有**把 SQL/周报题塞进冻结集。向量 Key 不足时仍 fail-open 到本地 MiniLM。
 
-没有把 Streamlit 搬进 Next.js。没有真 IMAP、LangGraph、GraphRAG、浏览器操作 Agent。没有上线、没有用户量。
+没有把 Streamlit 搬进 Next.js。没有真 IMAP、LangGraph、GraphRAG、浏览器操作 Agent。
 
 ## 本地运行（Windows / PowerShell）
 
